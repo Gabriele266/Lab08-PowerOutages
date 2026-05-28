@@ -51,6 +51,10 @@ class Event:
         return self._date_event_finished
 
     @property
+    def duration(self):
+        return (self.date_event_finished - self.date_event_began).seconds / 3600
+
+    @property
     def demand_loss(self):
         return self._demand_loss
 

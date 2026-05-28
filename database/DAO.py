@@ -14,7 +14,7 @@ class DAO():
         result = []
 
         cursor = conn.cursor(dictionary=True)
-        query = """ ADD YOUR QUERY """
+        query = """SELECT * FROM Nerc"""
 
         cursor.execute(query)
 
@@ -26,15 +26,18 @@ class DAO():
         return result
 
     @staticmethod
-    def getAllEvents(nerc):
+    def getAllEventsByNercId(nerc_id):
+        """
+        Restituisce tutti gli eventi che appartengono al gestore ordinati in base all'ID (per ragioni interne)
+        """
         conn = DBConnect.get_connection()
 
         result = []
 
         cursor = conn.cursor(dictionary=True)
-        query = """ ADD YOUR QUERY """
+        query = """SELECT * FROM PowerOutages WHERE nerc_id=%s SORT BY id"""
 
-        cursor.execute(query, (nerc.id,))
+        cursor.execute(query, (nerc_id,))
 
         for row in cursor:
             result.append(
