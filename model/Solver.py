@@ -32,12 +32,13 @@ class Solver:
             if previous_partial is not None:
                 prev_evts += previous_partial.blackout_events
 
-            sol = PartialSolution(          # Creo la nuova soluzione da esplorare
+            sol = PartialSolution(          # Creo la nuova soluzione da esplorare (non contiene ancora le statistiche aggregate)
                 prev_evts + [evt]
             )
             if not self.__check_in_cache(sol):
-                print(f"Unique solution found: {sol}")
+                sol.calc_aggregates()            # Effettuo il calcolo delle statistiche aggregate
                 self.check_solution(sol)        # Controllo che sia ammissibile e se è ottima
+                print(f"Unique solution found: {sol}")
                 self.__append_to_cache(sol)     # Aggiungo alla cache
 
             # espando aggiungendo un livello alla soluzione che stavo già guardando
@@ -51,6 +52,8 @@ class Solver:
                 self.__optimal_solution = sol
             elif self.__optimal_solution is not None and self.check_optimal(sol):
                 self.__optimal_solution = sol
+        else:
+            sol.is_ammissible = False
 
     def __append_to_cache(self, solution: PartialSolution):
         """Aggiunge la soluzione in cache solo se non è ancora stata esplorata. """
@@ -63,11 +66,23 @@ class Solver:
 
         return False
 
+    @property
+    def optimal_solution(self):
+        if self.__optimal_solution is not None:
+            return self.__optimal_solution
+        raise Exception("No optimal solution found (check if you have called solve() )")
+
     def check_admissible(self, sol: PartialSolution) -> bool:
-        return True     # TODO
+        """
+        Controlla l'ammissibilità della soluzione
+        """
+        return sol.total_covered_hours <= self.__x and sol.total_covered_years <= self.__y
 
     def check_optimal(self, sol: PartialSolution) -> bool:
-        return True     # TODO
+        """
+        Controlla l'ottimalità della soluzione rispetto alla soluzione attualmente ottima
+        """
+        return sol.total_customers > self.__optimal_solution.total_customers
 
     def get_event_by_id(self, id: int) -> Event:
         for evt in self.blackout_list:

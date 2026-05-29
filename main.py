@@ -14,6 +14,8 @@ def main(page: ft.Page):
     my_view.load_interface()
     s = Solver(20, 30, 2)
     s.solve()
-
+    optimal = s.optimal_solution
+    print("Soluzione ottima: ")
+    print(optimal)
 
 ft.app(target=main)
