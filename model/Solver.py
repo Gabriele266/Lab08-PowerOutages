@@ -13,6 +13,7 @@ class Solver:
         self.blackout_list: list[Event] = DAO.getAllEventsByNercId(nerc_id)
         self.__optimal_solution: PartialSolution | None = None
         self.__solutions_cache: list[PartialSolution] = []              # Cache con tutte le soluzioni già esplorate
+        self.__not_admissible_cache: list[set[int]]= []                # Lista con tutti i vettori di id che danno luogo a soluzioni non ammissibili
 
     def solve(self, k = 1, previous_partial: PartialSolution | None = None):
         """
@@ -22,7 +23,7 @@ class Solver:
         """
         tot = len(self.blackout_list)
 
-        if k > tot:
+        if k > tot or (previous_partial is not None and previous_partial.is_ammissible == False):
             return          # Ho finito le possibili soluzioni da esplorare
 
         available_events = []
@@ -43,27 +44,40 @@ class Solver:
             sol = PartialSolution(          # Creo la nuova soluzione da esplorare (non contiene ancora le statistiche aggregate)
                 prev_evts + [evt]
             )
-            if not self.__check_in_cache(sol):          # Non ri-esploro soluzioni che differiscono solo per l'ordine
-                sol.calc_aggregates()            # Effettuo il calcolo delle statistiche aggregate
-                self.__check_solution(sol)        # Controllo che sia ammissibile e se è ottima
-                print(f"Unique solution found: {sol}")
-                self.__append_to_cache(sol)     # Aggiungo alla cache
+            if self.__it_cant_be_admissible(sol.blackout_ids):
+                self.__not_admissible_cache.append(sol.blackout_ids)        # La aggiungo alla cache dei non ammissibili per rendere il controllo la prossima volta più semplice
+                continue                # Procedo con la prossima soluzione, questa so già che non è ammissibile
+            elif not self.__check_in_cache(sol):            # Non so se sia ammissibile o meno ma non è in nessuna delle due cache
+                sol.calc_aggregates()  # Effettuo il calcolo delle statistiche aggregate
+                if self.__check_admissible(sol):            # Controllo l'ammissibilità della soluzione
+                    sol.is_ammissible = True
+                    # Controllo ottimalità
+                    if self.__optimal_solution is None:
+                        self.__optimal_solution = sol
+                    elif self.__optimal_solution is not None and self.__check_optimal(sol):
+                        self.__optimal_solution = sol
 
-            # espando aggiungendo un livello alla soluzione che stavo già guardando
-            self.solve(k + 1, sol)
+                    self.__append_to_cache(sol)     # Aggiungo alla cache
+                    print(sol)
+                    # espando aggiungendo un livello alla soluzione che stavo già guardando
+                    self.solve(k + 1, sol)
+                else:       # Soluzione non ammissibile, aggiungo i suoi id alla cache delle soluzioni non ammissibili per evitare di ri-fare tutti i calcoli un'altra volta
+                    sol.is_ammissible = False
+                    self.__not_admissible_cache.append(sol.blackout_ids)        # Li mantengo ordinati così il controllo è solo un'uguaglianza
+                    # Nota: aggiungere qualcosa ad una soluzione che non è ammissibile non porta sicuramente ad avere una soluzione ammissibile, quindi è inutile espandere ulteriormente la ricerca su quel ramo
 
-    def __check_solution(self, sol: PartialSolution):
-        """Controlla se la soluzione è ammissibile e ottima, richiamando i metodi per fare i controlli specifici.
-        Sovrascrive gli attributi della soluzione di ammissibilità e validità
+    def __it_cant_be_admissible(self, sol_ids: set[int]):
         """
-        if self.__check_admissible(sol):
-            sol.is_ammissible = True
-            if self.__optimal_solution is None:
-                self.__optimal_solution = sol
-            elif self.__optimal_solution is not None and self.__check_optimal(sol):
-                self.__optimal_solution = sol
-        else:
-            sol.is_ammissible = False
+        Controlla se so già a priori che questa soluzione non può essere ammissibile solo guardando gli id
+        Restituisce True se so già che questa soluzione non può essere ammissibile
+        """
+        # L'insieme di ID è già nella cache dei non ammissibili (indifferentemente dall'ordine)
+        # L'insieme di ID è un superset di uno degli insiemi già presenti nella cache dei non ammissibili --> Aggiungendo qualcosa non posso ottenere un valore ammissibile
+        for ids in self.__not_admissible_cache:
+            if ids.issubset(sol_ids):
+                return True
+
+        return False
 
     def __append_to_cache(self, solution: PartialSolution):
         """Aggiunge la soluzione in cache solo se non è ancora stata esplorata. """

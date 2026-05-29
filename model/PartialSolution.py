@@ -1,4 +1,3 @@
-
 from model.powerOutages import Event
 
 class PartialSolution:
@@ -12,10 +11,10 @@ class PartialSolution:
         if len(blackout_events) == 0:
             raise ValueError("An empty solution is not ammissible")
 
-        self.__blackout_ids: list[int] = list(
-            map(lambda e: e.id, blackout_events))  # Lista degli id scelti in questa soluzione
+        self.__blackout_ids: set[int] = set(sorted(
+            map(lambda e: e.id, blackout_events)))  # Set ordinato degli id scelti in questa soluzione
         self.__blackout_events: list[Event] = blackout_events  # Lista di descrittori
-        self.__total_covered_years: int = 0  # Numero di anni univoci coperti a partire da oggi che sono coperti
+        self.__total_covered_years: int = 0  # Differenza tra l'anno più recente e l'anno più vecchio
         self.__total_covered_hours: int = 0  # Numero totale di ore coperte
         self.__total_customers: int = 0  # Valore della funzione obiettivo
         self.is_ammissible: bool | None = None  # Indica se questa soluzione è ammissibile per il problema (None quando non è ancora stato verificato)
@@ -23,9 +22,10 @@ class PartialSolution:
 
     def calc_aggregates(self):
         """Calcola tutte le statistiche aggregate sulla soluzione"""
-        self.__blackout_ids = list(map(lambda e: e.id, self.blackout_events))
+        unique_years = sorted(set(map(lambda e: e.year, self.blackout_events)))
+
         self.__blackout_events = self.blackout_events
-        self.__total_covered_years  = len(set(map(lambda e: e.year, self.blackout_events)))
+        self.__total_covered_years  = abs(unique_years[-1] - unique_years[0])
         self.__total_covered_hours = sum(map(lambda e: e.duration, self.blackout_events), 0)
         self.__total_customers = sum(map(lambda e: e.customers_affected, self.blackout_events), 0)
         self.is_ammissible = None
