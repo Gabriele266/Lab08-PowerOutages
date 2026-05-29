@@ -35,7 +35,7 @@ class DAO():
         result = []
 
         cursor = conn.cursor(dictionary=True)
-        query = """SELECT * FROM PowerOutages WHERE nerc_id=%s SORT BY id"""
+        query = """SELECT * FROM PowerOutages WHERE nerc_id=%s ORDER BY id"""
 
         cursor.execute(query, (nerc_id,))
 

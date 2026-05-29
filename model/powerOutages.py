@@ -51,6 +51,10 @@ class Event:
         return self._date_event_finished
 
     @property
+    def year(self):
+        return self._date_event_finished.year
+
+    @property
     def duration(self):
         return (self.date_event_finished - self.date_event_began).seconds / 3600
 

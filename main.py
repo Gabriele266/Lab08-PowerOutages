@@ -1,5 +1,6 @@
 import flet as ft
 
+from model.Solver import Solver
 from model.model import Model
 from UI.view import View
 from UI.controller import Controller
@@ -11,6 +12,8 @@ def main(page: ft.Page):
     my_controller = Controller(my_view, my_model)
     my_view.set_controller(my_controller)
     my_view.load_interface()
+    s = Solver(20, 30, 2)
+    s.solve()
 
 
 ft.app(target=main)
