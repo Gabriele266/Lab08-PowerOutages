@@ -9,7 +9,7 @@ class Solver:
         self.__nerc_id = nerc_id
         self.blackout_list: list[Event] = DAO.getAllEventsByNercId(nerc_id)
         self.__optimal_solution: PartialSolution | None = None
-        self.__admissible_cache: list[PartialSolution] = []
+        self.__solutions_cache: list[PartialSolution] = []              # Cache con tutte le soluzioni già esplorate
 
     def solve(self, k = 1, previous_partial: PartialSolution | None = None):
         tot = len(self.blackout_list)
@@ -32,11 +32,14 @@ class Solver:
             if previous_partial is not None:
                 prev_evts += previous_partial.blackout_events
 
-            sol = PartialSolution(
+            sol = PartialSolution(          # Creo la nuova soluzione da esplorare
                 prev_evts + [evt]
             )
-            print(sol)
-            self.check_solution(sol)
+            if not self.__check_in_cache(sol):
+                print(f"Unique solution found: {sol}")
+                self.check_solution(sol)        # Controllo che sia ammissibile e se è ottima
+                self.__append_to_cache(sol)     # Aggiungo alla cache
+
             # espando aggiungendo un livello alla soluzione che stavo già guardando
             self.solve(k + 1, sol)
 
@@ -44,12 +47,21 @@ class Solver:
         # Controllo questa soluzione
         if self.check_admissible(sol):
             sol.is_ammissible = True
-            self.__admissible_cache.append(sol)
-
             if self.__optimal_solution is None:
                 self.__optimal_solution = sol
             elif self.__optimal_solution is not None and self.check_optimal(sol):
                 self.__optimal_solution = sol
+
+    def __append_to_cache(self, solution: PartialSolution):
+        """Aggiunge la soluzione in cache solo se non è ancora stata esplorata. """
+        self.__solutions_cache.append(solution)
+
+    def __check_in_cache(self, solution: PartialSolution) -> bool:
+        for s in self.__solutions_cache:
+            if s.__eq__(solution):
+                return True
+
+        return False
 
     def check_admissible(self, sol: PartialSolution) -> bool:
         return True     # TODO

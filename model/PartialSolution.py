@@ -1,6 +1,4 @@
 
-from dataclasses import dataclass
-
 from model.powerOutages import Event
 
 class PartialSolution:
@@ -50,7 +48,7 @@ class PartialSolution:
         """
         Due soluzioni sono identiche se contengono la stessa lista di ID, anche non nello stesso ordine
         """
-        return self.__blackout_ids.sort() == other.__blackout_ids.sort()
+        return sorted(self.blackout_ids) == sorted(other.blackout_ids)
 
     def __str__(self):
         return f"""
