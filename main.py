@@ -14,7 +14,7 @@ def main(page: ft.Page):
     my_controller = Controller(my_view, my_model)
     my_view.set_controller(my_controller)
     my_view.load_interface()
-    s = Solver(2, 1, 14)
+    s = Solver(2, 3, 14)
     print(len(s.blackout_list))
     t1 = time.time()
     s.solve()

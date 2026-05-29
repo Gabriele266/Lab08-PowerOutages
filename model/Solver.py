@@ -44,9 +44,15 @@ class Solver:
             sol = PartialSolution(          # Creo la nuova soluzione da esplorare (non contiene ancora le statistiche aggregate)
                 prev_evts + [evt]
             )
+            sol.calc_target_function()
+
+            if (self.__optimal_solution is not None) and (sol.total_customers <= self.optimal_solution.total_customers):
+                continue        # Scarto subito tutte le soluzioni che so non portare nessun miglioramento, indifferentemente dal fatto che possano essere ammissibili o meno
+
             if self.__it_cant_be_admissible(sol.blackout_ids):
                 self.__not_admissible_cache.append(sol.blackout_ids)        # La aggiungo alla cache dei non ammissibili per rendere il controllo la prossima volta più semplice
                 continue                # Procedo con la prossima soluzione, questa so già che non è ammissibile
+
             elif not self.__check_in_cache(sol):            # Non so se sia ammissibile o meno ma non è in nessuna delle due cache
                 sol.calc_aggregates()  # Effettuo il calcolo delle statistiche aggregate
                 if self.__check_admissible(sol):            # Controllo l'ammissibilità della soluzione

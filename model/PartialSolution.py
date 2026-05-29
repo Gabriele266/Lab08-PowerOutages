@@ -20,6 +20,10 @@ class PartialSolution:
         self.is_ammissible: bool | None = None  # Indica se questa soluzione è ammissibile per il problema (None quando non è ancora stato verificato)
         self.__is_optimal: bool | None = None  # Indica se è la soluzione ottima
 
+    def calc_target_function(self):
+        """Calcola la funzione obiettivo"""
+        self.__total_customers = sum(map(lambda e: e.customers_affected, self.blackout_events), 0)
+
     def calc_aggregates(self):
         """Calcola tutte le statistiche aggregate sulla soluzione"""
         unique_years = sorted(set(map(lambda e: e.year, self.blackout_events)))
@@ -27,7 +31,7 @@ class PartialSolution:
         self.__blackout_events = self.blackout_events
         self.__total_covered_years  = abs(unique_years[-1] - unique_years[0])
         self.__total_covered_hours = sum(map(lambda e: e.duration, self.blackout_events), 0)
-        self.__total_customers = sum(map(lambda e: e.customers_affected, self.blackout_events), 0)
+        self.calc_target_function()
         self.is_ammissible = None
         self.__is_optimal = None
 
