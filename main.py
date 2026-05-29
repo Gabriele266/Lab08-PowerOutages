@@ -1,3 +1,5 @@
+import time
+
 import flet as ft
 
 from model.Solver import Solver
@@ -12,9 +14,13 @@ def main(page: ft.Page):
     my_controller = Controller(my_view, my_model)
     my_view.set_controller(my_controller)
     my_view.load_interface()
-    s = Solver(20, 30, 2)
+    s = Solver(2, 1, 14)
+    print(len(s.blackout_list))
+    t1 = time.time()
     s.solve()
     optimal = s.optimal_solution
+    t2 = time.time()
+    print(f"Tempo impiegato: {t2 - t1}s")
     print("Soluzione ottima: ")
     print(optimal)
 
