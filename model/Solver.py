@@ -3,6 +3,9 @@ from model.PartialSolution import PartialSolution
 from model.powerOutages import Event
 
 class Solver:
+    """
+    Classe per risolvere il problema PL, con caching
+    """
     def __init__(self, X: int, Y: int, nerc_id: int):
         self.__x = X
         self.__y = Y
@@ -12,6 +15,11 @@ class Solver:
         self.__solutions_cache: list[PartialSolution] = []              # Cache con tutte le soluzioni già esplorate
 
     def solve(self, k = 1, previous_partial: PartialSolution | None = None):
+        """
+        Effettua la risoluzione del problema di programmazione lineare
+        partendo da k = 1 fino a quando ci sono soluzioni possibili.
+        Esplora tutte le combinazioni di possibili eventi
+        """
         tot = len(self.blackout_list)
 
         if k > tot:
@@ -35,22 +43,24 @@ class Solver:
             sol = PartialSolution(          # Creo la nuova soluzione da esplorare (non contiene ancora le statistiche aggregate)
                 prev_evts + [evt]
             )
-            if not self.__check_in_cache(sol):
+            if not self.__check_in_cache(sol):          # Non ri-esploro soluzioni che differiscono solo per l'ordine
                 sol.calc_aggregates()            # Effettuo il calcolo delle statistiche aggregate
-                self.check_solution(sol)        # Controllo che sia ammissibile e se è ottima
+                self.__check_solution(sol)        # Controllo che sia ammissibile e se è ottima
                 print(f"Unique solution found: {sol}")
                 self.__append_to_cache(sol)     # Aggiungo alla cache
 
             # espando aggiungendo un livello alla soluzione che stavo già guardando
             self.solve(k + 1, sol)
 
-    def check_solution(self, sol: PartialSolution):
-        # Controllo questa soluzione
-        if self.check_admissible(sol):
+    def __check_solution(self, sol: PartialSolution):
+        """Controlla se la soluzione è ammissibile e ottima, richiamando i metodi per fare i controlli specifici.
+        Sovrascrive gli attributi della soluzione di ammissibilità e validità
+        """
+        if self.__check_admissible(sol):
             sol.is_ammissible = True
             if self.__optimal_solution is None:
                 self.__optimal_solution = sol
-            elif self.__optimal_solution is not None and self.check_optimal(sol):
+            elif self.__optimal_solution is not None and self.__check_optimal(sol):
                 self.__optimal_solution = sol
         else:
             sol.is_ammissible = False
@@ -68,26 +78,19 @@ class Solver:
 
     @property
     def optimal_solution(self):
+        """Restituisce la soluzione ottima trovata dall'algoritmo se esiste"""
         if self.__optimal_solution is not None:
             return self.__optimal_solution
         raise Exception("No optimal solution found (check if you have called solve() )")
 
-    def check_admissible(self, sol: PartialSolution) -> bool:
+    def __check_admissible(self, sol: PartialSolution) -> bool:
         """
         Controlla l'ammissibilità della soluzione
         """
         return sol.total_covered_hours <= self.__x and sol.total_covered_years <= self.__y
 
-    def check_optimal(self, sol: PartialSolution) -> bool:
+    def __check_optimal(self, sol: PartialSolution) -> bool:
         """
         Controlla l'ottimalità della soluzione rispetto alla soluzione attualmente ottima
         """
         return sol.total_customers > self.__optimal_solution.total_customers
-
-    def get_event_by_id(self, id: int) -> Event:
-        for evt in self.blackout_list:
-            if evt.id == id:
-                return evt
-
-        raise ValueError(str(id))
-
