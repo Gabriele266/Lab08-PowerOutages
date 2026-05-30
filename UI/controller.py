@@ -70,7 +70,7 @@ class Controller:
         self._model.max_years = int(event.data)
 
     def handle_max_hours_change(self, event):
-        self._model.max_hours = int(event.data)
+        self._model.max_hours = float(event.data)
 
     def handle_nerc_select(self, event):
         self._model.nerc_id = int(event.data)

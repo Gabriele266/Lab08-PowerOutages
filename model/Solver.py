@@ -7,7 +7,7 @@ class Solver:
     """
     Classe per risolvere il problema PL, con caching
     """
-    def __init__(self, max_hours: int, max_years: int, nerc_id: int):
+    def __init__(self, max_hours: float, max_years: int, nerc_id: int):
         self.__max_hours = max_hours
         self.__max_years = max_years
         self.__nerc_id = nerc_id
