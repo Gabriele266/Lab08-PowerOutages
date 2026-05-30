@@ -6,11 +6,11 @@ class Solver:
     """
     Classe per risolvere il problema PL, con caching
     """
-    def __init__(self, X: int, Y: int, nerc_id: int):
-        self.__x = X
-        self.__y = Y
+    def __init__(self, max_hours: int, max_years: int, nerc_id: int):
+        self.__max_hours = max_hours
+        self.__max_years = max_years
         self.__nerc_id = nerc_id
-        self.blackout_list: list[Event] = DAO.getAllEventsByNercId(nerc_id)
+        self.__blackout_list: list[Event] = DAO.getAllEventsByNercId(nerc_id)
         self.__optimal_solution: PartialSolution | None = None
         self.__solutions_cache: list[PartialSolution] = []              # Cache con tutte le soluzioni già esplorate
         self.__not_admissible_cache: list[set[int]]= []                # Lista con tutti i vettori di id che danno luogo a soluzioni non ammissibili
@@ -19,19 +19,19 @@ class Solver:
         """
         Effettua la risoluzione del problema di programmazione lineare
         partendo da k = 1 fino a quando ci sono soluzioni possibili.
-        Esplora tutte le combinazioni di possibili eventi
+        Esplora tutte le combinazioni di possibili eventi, di tutte le dimensioni possibili, bloccandosi in modo intelligente
         """
-        tot = len(self.blackout_list)
+        tot = len(self.__blackout_list)
 
         if k > tot or (previous_partial is not None and previous_partial.is_ammissible == False):
             return          # Ho finito le possibili soluzioni da esplorare
 
         available_events = []
         if k == 1 and previous_partial is None:
-            available_events = self.blackout_list
+            available_events = self.__blackout_list
 
         if k > 1 and previous_partial is not None:
-            available_events = set(self.blackout_list) - set(previous_partial.blackout_events)    # Lista di tutti gli id che posso utilizzare per esplorare nuove combinazioni senza fare ripetizioni
+            available_events = set(self.__blackout_list) - set(previous_partial.blackout_events)    # Lista di tutti gli id che posso utilizzare per esplorare nuove combinazioni senza fare ripetizioni
 
         if len(available_events) == 0:
             return
@@ -49,12 +49,12 @@ class Solver:
             if (self.__optimal_solution is not None) and (sol.total_customers <= self.optimal_solution.total_customers):
                 continue        # Scarto subito tutte le soluzioni che so non portare nessun miglioramento, indifferentemente dal fatto che possano essere ammissibili o meno
 
-            if self.__it_cant_be_admissible(sol.blackout_ids):
+            if self.__it_cant_be_admissible(sol.blackout_ids):              # Se assume valore True, so che questa soluzione non può essere ammissibile senza calcolare effettivamente i valori
                 self.__not_admissible_cache.append(sol.blackout_ids)        # La aggiungo alla cache dei non ammissibili per rendere il controllo la prossima volta più semplice
                 continue                # Procedo con la prossima soluzione, questa so già che non è ammissibile
 
             elif not self.__check_in_cache(sol):            # Non so se sia ammissibile o meno ma non è in nessuna delle due cache
-                sol.calc_aggregates()  # Effettuo il calcolo delle statistiche aggregate
+                sol.calc_aggregates()  # Effettuo il calcolo delle altre statistiche aggregate (gli ID sono già stati calcolati)
                 if self.__check_admissible(sol):            # Controllo l'ammissibilità della soluzione
                     sol.is_ammissible = True
                     # Controllo ottimalità
@@ -98,7 +98,7 @@ class Solver:
 
     @property
     def optimal_solution(self):
-        """Restituisce la soluzione ottima trovata dall'algoritmo se esiste"""
+        """Restituisce la soluzione ottima trovata dall'algoritmo, se esiste"""
         if self.__optimal_solution is not None:
             return self.__optimal_solution
         raise Exception("No optimal solution found (check if you have called solve() )")
@@ -107,7 +107,7 @@ class Solver:
         """
         Controlla l'ammissibilità della soluzione
         """
-        return sol.total_covered_hours <= self.__x and sol.total_covered_years <= self.__y
+        return sol.total_covered_hours <= self.__max_hours and sol.total_covered_years <= self.__max_years
 
     def __check_optimal(self, sol: PartialSolution) -> bool:
         """
