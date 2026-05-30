@@ -1,4 +1,5 @@
 from database.DAO import DAO
+from exceptions.SolverException import SolverException
 from model.PartialSolution import PartialSolution
 from model.powerOutages import Event
 
@@ -14,6 +15,10 @@ class Solver:
         self.__optimal_solution: PartialSolution | None = None
         self.__solutions_cache: list[PartialSolution] = []              # Cache con tutte le soluzioni già esplorate
         self.__not_admissible_cache: list[set[int]]= []                # Lista con tutti i vettori di id che danno luogo a soluzioni non ammissibili
+
+        if len(self.__blackout_list) == 0:
+            raise SolverException(motivation="Selected nerc id has no blackout events associated",
+                                  nerc_id=nerc_id, blackout_len=0)
 
     def solve(self, k = 1, previous_partial: PartialSolution | None = None):
         """
@@ -97,11 +102,16 @@ class Solver:
         return False
 
     @property
+    def total_blackout_count(self):
+        """Restituisce il numero totale di eventi presi in considerazione dall'algoritmo"""
+        return len(self.__blackout_list)
+
+    @property
     def optimal_solution(self):
         """Restituisce la soluzione ottima trovata dall'algoritmo, se esiste"""
         if self.__optimal_solution is not None:
             return self.__optimal_solution
-        raise Exception("No optimal solution found (check if you have called solve() )")
+        raise SolverException(f"No admissible solution found. Not-admissible cache len: {len(self.__not_admissible_cache)}", self.total_blackout_count, self.__nerc_id)
 
     def __check_admissible(self, sol: PartialSolution) -> bool:
         """

@@ -14,14 +14,14 @@ def main(page: ft.Page):
     my_controller = Controller(my_view, my_model)
     my_view.set_controller(my_controller)
     my_view.load_interface()
-    s = Solver(5, 10, 14)
-    print(len(s.__blackout_list))
-    t1 = time.time()
-    s.solve()
-    optimal = s.optimal_solution
-    t2 = time.time()
-    print(f"Tempo impiegato: {t2 - t1}s")
-    print("Soluzione ottima: ")
-    print(optimal)
+    # s = Solver(5, 10, 14)
+    # print(s.total_blackout_count)
+    # t1 = time.time()
+    # s.solve()
+    # optimal = s.optimal_solution
+    # t2 = time.time()
+    # print(f"Tempo impiegato: {t2 - t1}s")
+    # print("Soluzione ottima: ")
+    # print(optimal)
 
 ft.app(target=main)

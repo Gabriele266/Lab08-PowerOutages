@@ -1,28 +1,13 @@
 from database.DAO import DAO
+from model.nerc import Nerc
+
 
 class Model:
     def __init__(self):
-        self._solBest = []
-        self._listNerc = None
-        self._listEvents = None
-        self.loadNerc()
-
-
-
-    def worstCase(self, nerc, maxY, maxH):
-        # TO FILL
-        pass
-    def ricorsione(self, parziale, maxY, maxH, pos):
-        # TO FILL
-        pass
-
-    def loadEvents(self, nerc):
-        self._listEvents = DAO.getAllEvents(nerc)
-
-    def loadNerc(self):
-        self._listNerc = DAO.getAllNerc()
-
+        self.max_years = 0
+        self.max_hours = 0
+        self.nerc_id = 0
 
     @property
-    def listNerc(self):
-        return self._listNerc
+    def listNerc(self) -> list[Nerc]:
+        return DAO.getAllNerc()

@@ -73,8 +73,8 @@ class PartialSolution:
 
     def __str__(self):
         return f"""
-        Partial solution with {len(self.blackout_events)} events.
-        {[ f"{e.id}," for e in self.blackout_events]}
+        Solution with {len(self.blackout_events)} events.
+        {[ f"{e}," for e in self.blackout_events]}
         Total customers: {self.__total_customers} = z
         Admissible: {self.is_ammissible}
         Duration: {self.__total_covered_hours}

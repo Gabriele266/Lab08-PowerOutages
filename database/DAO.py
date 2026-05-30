@@ -3,7 +3,7 @@ from model.nerc import Nerc
 from model.powerOutages import Event
 
 
-class DAO():
+class DAO:
     def __init__(self):
         pass
 
